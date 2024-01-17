@@ -97,8 +97,8 @@ vex::motor rf = vex::motor(vex::PORT13, vex::ratio18_1);
 
 vex::motor cata = vex::motor(vex::PORT20, vex::ratio36_1);
 
-vex::digital_out wings = vex::digital_out(vex::PORT); //H
-vex::digital_out block = vex::digital_out(vex::PORT); //A
+vex::digital_out wings = vex::digital_out(Brain.ThreeWirePort.H);
+vex::digital_out block = vex::digital_out(Brain.ThreeWirePort.A);
 
 vex::inertial i = vex::inertial(vex::PORT);
 vex::controller c = vex::controller(vex::primary);
