@@ -1,28 +1,137 @@
-/*----------------------------------------------------------------------------*/
-/*                                                                            */
-/*    Module:       main.cpp                                                  */
-/*    Author:       fixmu                                                     */
-/*    Created:      1/17/2024, 5:09:35 PM                                     */
-/*    Description:  V5 project                                                */
-/*                                                                            */
-/*----------------------------------------------------------------------------*/
-#include "vex.h"
+/* #include "vex.h"
 
-using namespace vex;
+// using namespace vex;
 
-// A global instance of vex::brain used for printing to the V5 brain screen
-vex::brain       Brain;
+// brain Brain;
 
-// define your global instances of motors and other devices here
+// motor leftMotorP = motor(PORT8, ratio6_1, true);
+// motor leftMotorA = motor(PORT10, ratio6_1, false);
+// motor leftMotorB = motor(PORT6, ratio6_1, false);
+// motor_group LeftDriveSmart = motor_group(leftMotorA, leftMotorB, leftMotorP);
 
+// motor rightMotorP = motor(PORT7, ratio6_1, false);
+// motor rightMotorA = motor(PORT9, ratio6_1, true);
+// motor rightMotorB = motor(PORT5, ratio6_1, true);
+// motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB, rightMotorP);
+
+// inertial DrivetrainInertial = inertial(PORT20);
+// smartdrive Drivetrain = smartdrive(LeftDriveSmart, RightDriveSmart, DrivetrainInertial,
+//                                    299.24, 320, 40, mm, 1.5);
+
+// motor Intake = motor(PORT18, ratio6_1, false);
+// motor Catapult = motor(PORT15, ratio36_1, true);
+
+// bumper BumperA = bumper(Brain.ThreeWirePort.A);
+// controller Controller1 = controller(primary);
+
+// competition Competition;
+
+// void auto_0() {
+//     Drivetrain.setDriveVelocity(25,percent);
+//     Drivetrain.driveFor(reverse, 2300, mm);
+//     Drivetrain.driveFor(forward, 500, mm);
+// }
+
+// void teleOp() {
+//     double leftSpeed, rightSpeed, turnSpeed = 0.5;
+//     RightDriveSmart.spin(forward);
+//     LeftDriveSmart.spin(forward);
+//     while (Competition.isDriverControl() && Competition.isEnabled()) {
+
+//         leftSpeed = Controller1.Axis3.position() - Controller1.Axis1.position() * turnSpeed;
+//         rightSpeed = Controller1.Axis3.position() + Controller1.Axis1.position() * turnSpeed ;
+
+        RightDriveSmart.setVelocity(rightSpeed, percent);
+//         LeftDriveSmart.setVelocity(leftSpeed, percent);
+
+//         Drivetrain.setStopping((Controller1.ButtonY.pressing() ? hold : coast));
+
+//         if (BumperA.pressing()) {
+//             Catapult.stop();
+//             if (Controller1.ButtonL1.pressing()) {
+//                 Catapult.setVelocity(95, percent);
+//                 Catapult.spin(reverse);
+//             }
+//         }
+//         else {
+//             Catapult.setVelocity(95, percent);
+//             Catapult.spin(reverse);
+//         }
+
+//         Intake.setVelocity(95,percent);
+//         if (Controller1.ButtonR1.pressing()) {
+//             Intake.spin(forward);
+//         }
+//         else if (Controller1.ButtonR2.pressing()) {
+//             Intake.spin(reverse);
+//         }
+//         else {
+//             Intake.stop();
+//         }
+//     }
+// }
+
+// int main() {
+//     vex::competition::bStopTasksBetweenModes = false;
+//     Competition.autonomous(auto_0);
+//     Competition.drivercontrol(teleOp);
+
+//     DrivetrainInertial.calibrate();
+//     while (DrivetrainInertial.isCalibrating()) {}
+
+//     return 0;
+// }
+*/
+
+#include "Drive.h"
+
+vex::brain Brain;
+
+vex::motor lb = vex::motor(vex::PORT14, vex::ratio18_1, true);
+vex::motor lm = vex::motor(vex::PORT15, vex::ratio18_1, true);
+vex::motor lf  = vex::motor(vex::PORT16, vex::ratio18_1, true);
+
+vex::motor rb = vex::motor(vex::PORT11, vex::ratio18_1);
+vex::motor rm = vex::motor(vex::PORT12, vex::ratio18_1);
+vex::motor rf = vex::motor(vex::PORT13, vex::ratio18_1);
+
+vex::motor cata = vex::motor(vex::PORT20, vex::ratio36_1);
+
+vex::digital_out wings = vex::digital_out(vex::PORT); //H
+vex::digital_out block = vex::digital_out(vex::PORT); //A
+
+vex::inertial i = vex::inertial(vex::PORT);
+vex::controller c = vex::controller(vex::primary);
+
+TankDrive drive = TankDrive(4.0, 10.0, vex::distanceUnits::in, i, lb, rb, lm, rm, lf, rf);
+
+vex::competition Comp;
+
+bool blockState = false, wingState = false;
+
+void auton() {}
+
+void R2() {blockState = !blockState;}
+
+void L2() {wingState = !wingState;}
+
+void teleOp() {
+    c.ButtonR2.pressed(R2);
+    c.ButtonL2.pressed(L2);
+    cata.spin(vex::forward);
+    while (Comp.isDriverControl() && Comp.isEnabled()) {
+        drive.driveTeleOp(c, 0.5, CUBIC, 5);
+        wings.set(wingState);
+        block.set(blockState);
+
+        cata.setVelocity(c.ButtonL1.pressing() ? 100 : 0, vex::percent);
+    }
+}
 
 int main() {
+    vex::competition::bStopTasksBetweenModes = false;
+    Comp.autonomous(auton);
+    Comp.drivercontrol(teleOp);
 
-    Brain.Screen.printAt( 10, 50, "Hello V5" );
-   
-    while(1) {
-        
-        // Allow other tasks to run
-        this_thread::sleep_for(10);
-    }
+    return 0;
 }
