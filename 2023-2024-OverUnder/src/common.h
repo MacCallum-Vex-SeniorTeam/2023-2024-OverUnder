@@ -4,6 +4,8 @@
 
 #define clip(x, min, max) fmax(min, fmin(max, x));
 
+void waitUntilCondition(bool(*cond)(void)) { while (1) if (cond()) return; }
+
 double convert(double dist1, vex::distanceUnits initialUnits, vex::distanceUnits targetUnits) {
     if (initialUnits == targetUnits) return dist1;
     switch (targetUnits) {
@@ -12,23 +14,32 @@ double convert(double dist1, vex::distanceUnits initialUnits, vex::distanceUnits
                 case vex::distanceUnits::mm:
                     return dist1*10.0;
                 case vex::distanceUnits::in:
-                    return ;
+                    return dist1/2.54;
+                default:
+                    return 0.0;
             }
         case vex::distanceUnits::mm:
             switch (initialUnits) {
                 case vex::distanceUnits::cm:
                     return dist1/10.0;
                 case vex::distanceUnits::in:
-                    return ;
+                    return dist1/25.4;
+                default:
+                    return 0.0;
             }
         case vex::distanceUnits::in:
             switch (initialUnits) {
                 case vex::distanceUnits::cm:
-                    return ;
+                    return dist1*2.54;
                 case vex::distanceUnits::mm:
-                    return ;
+                    return dist1*25.4;
+                default:
+                    return 0.0;
             }
+        default:
+            return 0.0;
     }
+    return 0.0;
 }
 
 static const double volt_max = 12, volt_min = -12;
