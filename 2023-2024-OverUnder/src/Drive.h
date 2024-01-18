@@ -7,14 +7,13 @@ class TankDrive {
         SlewController SlewController;
         vex::inertial *inertialSensor;
         template <typename... Args>
-        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial &inertialSensor, vex::motor m, Args... m2) : motors(), SlewController(0.044, 0.001) {
+        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), SlewController(0.044, 0.001) {
             _AddMotor(m, m2...);
-            double conversionFactor = 1.0;
             wheelCirc = M_PI * convert(wheelDiameter, units, vex::distanceUnits::in);
             this->trackWidth = convert(trackWidth, units, vex::distanceUnits::in);
             this->inertialSensor = inertialSensor;
         }
-        void driveTeleOp(vex::controller c, double turnSpeed, vex::brain b, JoystickFilter filter = JoystickFilter::NONE, int deadZone = 0) {
+        void driveTeleOp(vex::controller c, double turnSpeed, JoystickFilter filter = JoystickFilter::NONE, int deadZone = 0) {
             double axis3 = abs(c.Axis3.position()) < deadZone ? 0 : c.Axis3.position();
             double axis1 = abs(c.Axis1.position()) < deadZone ? 0 : c.Axis1.position();
             double leftSpeed = axis3 + axis1 * turnSpeed;
@@ -28,15 +27,8 @@ class TankDrive {
                 m.spin(vex::forward);
                 m.setVelocity(i % 2 == 0 ? leftSpeed : rightSpeed, vex::percent);
                 m.setStopping(c.ButtonY.pressing() ? vex::hold : vex::coast);
-                b.Screen.print(m.velocity(vex::percent));
-                b.Screen.newLine();
                 i++;
             }
-            b.Screen.newLine();
-            b.Screen.print(leftSpeed);
-            b.Screen.newLine();
-            b.Screen.print(rightSpeed);
-            b.Screen.newLine();
         }
         void drive(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
@@ -82,9 +74,12 @@ class TankDrive {
                 i++;
             }
             _SetMotorVelocity(velocity, vUnits);
-            waitUntilCondition([&motors, &target]() -> bool {
+            waitUntilCondition([this, target, accuracy]() -> bool {
                 int i = 0;
-                for (vex::motor motor: motors) if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
+                for (vex::motor motor: motors) {
+                    if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
+                    i++;
+                }
                 return false;
             });
         }

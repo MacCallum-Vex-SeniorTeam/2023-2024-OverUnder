@@ -131,7 +131,7 @@ void teleOp() {
     c.ButtonL2.pressed(L2);
     cata.spin(vex::forward);
     while (Comp.isDriverControl() && Comp.isEnabled()) {
-        drive.driveTeleOp(c, 1.0, Brain, JoystickFilter::CUBIC, 5);
+        drive.driveTeleOp(c, 1.0, JoystickFilter::CUBIC, 5);
         wings.set(wingState);
         block.set(blockState);
         cata.setVelocity(c.ButtonL1.pressing() ? 100 : 0, vex::percent);
