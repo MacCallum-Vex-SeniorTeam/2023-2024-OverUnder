@@ -1,4 +1,5 @@
 #include "common.h"
+#include <memory>
 
 class TankDrive {
     public:
@@ -67,21 +68,21 @@ class TankDrive {
         void driveWithGeometry(double distance, double velocity, vex::distanceUnits distanceUnits = vex::distanceUnits::in, vex::velocityUnits vUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
             distance = convert(distance, distanceUnits, vex::distanceUnits::in);
             distance /= wheelCirc;
-            double target[motors.size()];
+            std::unique_ptr<double[]> target{new double[motors.size()]};
             int i = 0;
             for (vex::motor motor: motors) {
                 target[i] = motor.position(vex::rotationUnits::rev) + distance;
                 i++;
             }
             _SetMotorVelocity(velocity, vUnits);
-            waitUntilCondition([this, target, accuracy]() -> bool {
-                int i = 0;
-                for (vex::motor motor: motors) {
-                    if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
-                    i++;
-                }
-                return false;
-            });
+            // waitUntilCondition([this, &target, accuracy]() -> bool {
+            //     int i = 0;
+            //     for (vex::motor motor: motors) {
+            //         if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
+            //         i++;
+            //     }
+            //     return false;
+            // });
         }
         void driveWithInertialPID(double distance, vex::distanceUnits distanceUnits, double p, double i, double d, double i_max, double i_min) {
         }

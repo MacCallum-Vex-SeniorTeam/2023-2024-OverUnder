@@ -103,23 +103,27 @@ vex::digital_out block = vex::digital_out(Brain.ThreeWirePort.A);
 vex::inertial i = vex::inertial(vex::PORT17);
 vex::controller c = vex::controller(vex::primary);
 
-TankDrive drive = TankDrive(4.0, 10.0, vex::distanceUnits::in, i, lb, rb, lm, rm, lf, rf);
+TankDrive drive = TankDrive(4.0, 10.0, vex::distanceUnits::in, &i, lb, rb, lm, rm, lf, rf);
 
 vex::motor_group l = vex::motor_group(lb, lm, lf);
 vex::motor_group r = vex::motor_group(rb, rm, rf);
 
-vex::smartdrive d = vex::smartdrive(l, r, i, 3.25*M_PI, 13.0, 13.0, vex::distanceUnits::in, 2.0/3.0);
+//vex::smartdrive d = vex::smartdrive(l, r, i, 3.25*M_PI, 13.0, 13.0, vex::distanceUnits::in, 2.0/3.0);
+vex::smartdrive Drivetrain = vex::smartdrive(l, r, i, 299.24, 320, 40, vex::mm, 1.5);
 
 vex::competition Comp;
 
 bool blockState = false, wingState = false;
 
 void auton15s() {
-    d.driveFor(10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
-    d.driveFor(-10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
-    wings.set(true);
-    d.turnToHeading(135.0, vex::rotationUnits::deg, 25.0, vex::velocityUnits::pct, true);
-    d.driveFor(36.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
+    Drivetrain.setDriveVelocity(25, vex::percent);
+    Drivetrain.driveFor(vex::reverse, 2300, vex::mm);
+    Drivetrain.driveFor(vex::forward, 500, vex::mm);
+    // d.driveFor(10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
+    // d.driveFor(-10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
+    // wings.set(true);
+    // d.turnToHeading(135.0, vex::rotationUnits::deg, 25.0, vex::velocityUnits::pct, true);
+    // d.driveFor(36.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
 }
 
 void R2() {blockState = !blockState;}
@@ -131,7 +135,7 @@ void teleOp() {
     c.ButtonL2.pressed(L2);
     cata.spin(vex::forward);
     while (Comp.isDriverControl() && Comp.isEnabled()) {
-        drive.driveTeleOp(c, 1.0, JoystickFilter::CUBIC, 5);
+        drive.driveTeleOp(c, 0.75, JoystickFilter::CUBIC, 5);
         wings.set(wingState);
         block.set(blockState);
         cata.setVelocity(c.ButtonL1.pressing() ? 100 : 0, vex::percent);
