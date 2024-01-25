@@ -4,7 +4,15 @@
 
 #define clip(x, min, max) fmax(min, fmin(max, x));
 
-void waitUntilCondition(bool(*cond)(void)) { while (1) if (cond()) return; }
+template <typename F, typename A> void enumerate(std::vector<F> l, A func) {
+    F obj;
+    for (int i = 0; l.size(); i++) {
+        obj = l[i];
+        func(&i, &obj);
+    }
+}
+
+template <typename F> void waitUntilCondition(F cond) { while (1) if (cond()) return; }
 
 double convert(double dist1, vex::distanceUnits initialUnits, vex::distanceUnits targetUnits) {
     if (initialUnits == targetUnits) return dist1;
@@ -59,6 +67,30 @@ class SlewController {
             this->targetVoltage.push_back(targetVoltage);
         }
         void update() {
+            enumerate(motors,
+                [this] (int *i, vex::motor *motor) -> void {
+                    double voltage = motor->voltage();
+                    double error = targetVoltage[*i] - voltage;
+                    if (fabs(error) < required_accuracy) {
+                        
+                    }
+                }
+            );
+
+            int i = 0;
+            for (vex::motor motor : motors) {
+                double voltage = motor.voltage();
+                if (fabs(voltage - targetVoltage[i]) < required_accuracy) {
+                    motors.erase(motors.begin()+i);
+                    targetVoltage.erase(targetVoltage.begin()+i);
+                    i--;
+                    continue;
+                }
+                error = targetVoltage[i] - voltage;
+                if (fabs(error) > slewRate) error = copysign(slewRate, error);
+                motor.spin(vex::forward, voltage+error, vex::volt);
+            }
+
             double voltage, error;
             for (int i = 0; i < motors.size(); i++) {
                 voltage = motors[i].voltage();

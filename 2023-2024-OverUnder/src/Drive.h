@@ -5,10 +5,9 @@ class TankDrive {
     public:
         std::vector<vex::motor> motors;
         double wheelCirc, trackWidth;
-        SlewController SlewController;
+        SlewController slewControl;
         vex::inertial *inertialSensor;
-        template <typename... Args>
-        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), SlewController(0.044, 0.001) {
+        template <typename... Args> TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), SlewController(0.044, 0.001) {
             _AddMotor(m, m2...);
             wheelCirc = M_PI * convert(wheelDiameter, units, vex::distanceUnits::in);
             this->trackWidth = convert(trackWidth, units, vex::distanceUnits::in);
@@ -23,19 +22,26 @@ class TankDrive {
                 leftSpeed = pow(leftSpeed/100, 3.0)*100;
                 rightSpeed = pow(rightSpeed/100, 3.0)*100;
             }
-            int i = 0;
-            for (vex::motor m: motors) {
-                m.spin(vex::forward);
-                m.setVelocity(i % 2 == 0 ? leftSpeed : rightSpeed, vex::percent);
-                m.setStopping(c.ButtonY.pressing() ? vex::hold : vex::coast);
-                i++;
-            }
+            enumerate(motors,
+                [leftSpeed, rightSpeed, &c] (int *i, vex::motor *motor) -> void {
+                    motor->spin(vex::forward);
+                    motor->setVelocity(*i % 2 == 0 ? leftSpeed : rightSpeed, vex::percent);
+                    motor->setStopping(c.ButtonY.pressing() ? vex::hold : vex::coast);
+                }
+            );
+            // int i = 0;
+            // for (vex::motor m: motors) {
+            //     m.spin(vex::forward);
+            //     m.setVelocity(i % 2 == 0 ? leftSpeed : rightSpeed, vex::percent);
+            //     m.setStopping(c.ButtonY.pressing() ? vex::hold : vex::coast);
+            //     i++;
+            // }
         }
         void drive(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
             if (slew) {
-                for (vex::motor motor: motors) SlewController.addTask(motor, voltage);
+                for (vex::motor motor: motors) slewControl.addTask(motor, voltage);
             } else {
                 for (vex::motor motor: motors) motor.spin(vex::forward, voltage, vex::voltageUnits::volt);
             }
@@ -44,21 +50,31 @@ class TankDrive {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
             if (slew) {
-                int i = 0;
-                for (vex::motor motor: motors) {
-                    SlewController.addTask(motor, voltage*(i % 2 == 0 ? 1 : -1));
-                    i++;
-                }
+                enumerate(motors, 
+                    [this, voltage] (int *i, vex::motor *motor) -> void {
+                        slewControl.addTask(*motor, voltage*(*i & 2 == 0 ? 1 : -1));
+                    }
+                );
+                // int i = 0;
+                // for (vex::motor motor: motors) {
+                //     slewControl.addTask(motor, voltage*(i % 2 == 0 ? 1 : -1));
+                //     i++;
+                // }
             } else {
-                int i = 0;
-                for (vex::motor motor: motors) {
-                    motor.spin(vex::forward, voltage*(i % 2 == 0 ? 1 : -1), vex::voltageUnits::volt);
-                    i++;
-                }
+                enumerate(motors, 
+                    [voltage] (int *i, vex::motor *motor) -> void { 
+                        motor->spin(vex::forward, voltage*(*i % 2 == 0 ? 1 : -1), vex::voltageUnits::volt);
+                    }
+                );
+                // int i = 0;
+                // for (vex::motor motor: motors) {
+                //     motor.spin(vex::forward, voltage*(i % 2 == 0 ? 1 : -1), vex::voltageUnits::volt);
+                //     i++;
+                // }
             }
         }
         void update() {
-            SlewController.update();
+            slewControl.update();
         }
         
         void turnWithGyroPID(double angle, AngleUnits angleUnits, double p, double i, double d, double i_max, double i_min) {     
@@ -75,20 +91,19 @@ class TankDrive {
                 i++;
             }
             _SetMotorVelocity(velocity, vUnits);
-            // waitUntilCondition([this, &target, accuracy]() -> bool {
-            //     int i = 0;
-            //     for (vex::motor motor: motors) {
-            //         if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
-            //         i++;
-            //     }
-            //     return false;
-            // });
+            waitUntilCondition([this, &target, accuracy]() -> bool {
+                int i = 0;
+                for (vex::motor motor: motors) {
+                    if (target[i] - motor.position(vex::rotationUnits::rev) < accuracy) return true;
+                    i++;
+                }
+                return false;
+            });
         }
         void driveWithInertialPID(double distance, vex::distanceUnits distanceUnits, double p, double i, double d, double i_max, double i_min) {
         }
     private:
-        template <typename... Args>
-        void _AddMotor(vex::motor m1, Args... m2) {
+        template <typename... Args> void _AddMotor(vex::motor m1, Args... m2) {
             motors.push_back(m1);
             _AddMotor(m2...);
         }
