@@ -15,11 +15,12 @@ class TankDrive {
             this->inertialSensor = inertialSensor;
             turnRadius = trackWidth/sqrt(2);
         }
+        // tested and working functions
         void driveTeleOp(vex::controller c, double turnSpeed, JoystickFilter filter = JoystickFilter::NONE, int deadZone = 0) {
             double axis3 = abs(c.Axis3.position()) < deadZone ? 0 : c.Axis3.position();
             double axis1 = abs(c.Axis1.position()) < deadZone ? 0 : c.Axis1.position();
-            double leftSpeed = axis3 + axis1 * turnSpeed;
-            double rightSpeed = axis3 - axis1 * turnSpeed;
+            double leftSpeed = axis3 - axis1 * turnSpeed;
+            double rightSpeed = axis3 + axis1 * turnSpeed;
             if (filter == JoystickFilter::CUBIC) {
                 leftSpeed = pow(leftSpeed/100, 3.0)*100;
                 rightSpeed = pow(rightSpeed/100, 3.0)*100;
@@ -32,6 +33,8 @@ class TankDrive {
                 i++;
             }
         }
+        
+        // theory functions
         void drive(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
@@ -45,7 +48,7 @@ class TankDrive {
                 }
             }
         }
-        void turn(double voltage, vex::voltageUnits voltageUnit, bool slew) {
+        void turn(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
             if (slew) {
@@ -65,10 +68,7 @@ class TankDrive {
         void update() {
             slewControl.update();
         }
-        
-        void turnWithGyroPID(double angle, AngleUnits angleUnits, double p, double i, double d, double i_max, double i_min) {     
-        }
-        void turnWithGeometry(double angle, double velocity, AngleUnits angleUnits = AngleUnits::DEGREE, vex::velocityUnits velUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
+        void turnWithEncoders(double angle, double velocity, AngleUnits angleUnits = AngleUnits::DEGREE, vex::velocityUnits velUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
             if (angleUnits == AngleUnits::DEGREE) angle *= M_PI/180.0;
             double distance = turnRadius*angle/wheelCirc;
             std::unique_ptr<double[]> target{new double[motors.size()]};
@@ -89,7 +89,7 @@ class TankDrive {
                 }
             );
         }
-        void driveWithGeometry(double distance, double velocity, vex::distanceUnits distanceUnits = vex::distanceUnits::in, vex::velocityUnits vUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
+        void driveWithEncoders(double distance, double velocity, vex::distanceUnits distanceUnits = vex::distanceUnits::in, vex::velocityUnits vUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
             distance = convert(distance, distanceUnits, vex::distanceUnits::in);
             distance /= wheelCirc;
             std::unique_ptr<double[]> target{new double[motors.size()]};
@@ -108,7 +108,23 @@ class TankDrive {
                 return false;
             });
         }
-        void driveWithInertialPID(double distance, vex::distanceUnits distanceUnits, double p, double i, double d, double i_max, double i_min) {
+        void turnWithGyroPID(double angle, double p, double i, double d, double i_max, double i_min, AngleUnits angleUnits = AngleUnits::DEGREE, double accuracy = 0.01) {     
+            if (angleUnits == RADIAN) angle *= 180.0/M_PI;
+            inertialSensor->resetHeading();
+            PIDController PID_loop(p, i, d, i_max, i_min, angle);
+            double current_heading = inertialSensor->heading(), turn_voltage;
+            while (fabs(current_heading - angle) > accuracy) {
+                current_heading = inertialSensor->heading();
+                turn_voltage = PID_loop.getValue(current_heading);
+                turn(turn_voltage);
+            }
+        }
+
+        // functions yet to do
+        void driveWithInertialPID(double distance, double p, double i, double d, double i_max, double i_min, vex::distanceUnits distanceUnits = vex::distanceUnits::in, double accuracy = 0.01) {
+            distance = convert(distance, distanceUnits, vex::distanceUnits::in);
+            distance /= wheelCirc;
+            
         }
     private:
         template <typename... Args> 

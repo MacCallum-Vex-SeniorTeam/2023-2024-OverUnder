@@ -75,49 +75,20 @@ class SlewController {
             this->targetVoltage.push_back(targetVoltage);
         }
         void update() {
-            enumerate(motors,
-                [this] (int *i, vex::motor *motor) -> void {
-                    double voltage = motor->voltage();
-                    double error = targetVoltage[*i] - voltage;
-                    if (fabs(error) < required_accuracy) {
-                        motors.erase(motors.begin()+*i);
-                        targetVoltage.erase(targetVoltage.begin() + *i);
-                        *i--;
-                    } else {
-                        if (fabs(error) > slewRate) error = copysign(slewRate, error);
-                        motor->spin(vex::forward, voltage+error, vex::volt);
-                    }
+            int i = 0;
+            for (vex::motor motor : motors) {
+                double voltage = motor.voltage();
+                if (fabs(voltage - targetVoltage[i]) < required_accuracy) {
+                    motors.erase(motors.begin()+i);
+                    targetVoltage.erase(targetVoltage.begin()+i);
+                    i--;
+                    continue;
                 }
-            );
-
-            // int i = 0;
-            // for (vex::motor motor : motors) {
-            //     double voltage = motor.voltage();
-            //     if (fabs(voltage - targetVoltage[i]) < required_accuracy) {
-            //         motors.erase(motors.begin()+i);
-            //         targetVoltage.erase(targetVoltage.begin()+i);
-            //         i--;
-            //         continue;
-            //     }
-            //     double error = targetVoltage[i] - voltage;
-            //     if (fabs(error) > slewRate) error = copysign(slewRate, error);
-            //     motor.spin(vex::forward, voltage+error, vex::volt);
-            //     i++;
-            // }
-
-            // double voltage, error;
-            // for (int i = 0; i < motors.size(); i++) {
-            //     voltage = motors[i].voltage();
-            //     if (fabs(voltage - targetVoltage[i]) < required_accuracy) {
-            //         motors.erase(motors.begin()+i);
-            //         targetVoltage.erase(targetVoltage.begin()+i);
-            //         i--;
-            //         continue;
-            //     }
-            //     error = targetVoltage[i] - voltage;
-            //     if (fabs(error) > slewRate) error = copysign(slewRate, error);
-            //     motors[i].spin(vex::directionType::fwd, voltage+error, vex::voltageUnits::volt);
-            // }
+                double error = targetVoltage[i] - voltage;
+                if (fabs(error) > slewRate) error = copysign(slewRate, error);
+                motor.spin(vex::forward, voltage+error, vex::volt);
+                i++;
+            }
         }
 };
 

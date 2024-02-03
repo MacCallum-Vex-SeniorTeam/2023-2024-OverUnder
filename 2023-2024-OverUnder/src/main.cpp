@@ -1,99 +1,14 @@
-/* #include "vex.h"
-
-// using namespace vex;
-
-// brain Brain;
-
-// motor leftMotorP = motor(PORT8, ratio6_1, true);
-// motor leftMotorA = motor(PORT10, ratio6_1, false);
-// motor leftMotorB = motor(PORT6, ratio6_1, false);
-// motor_group LeftDriveSmart = motor_group(leftMotorA, leftMotorB, leftMotorP);
-
-// motor rightMotorP = motor(PORT7, ratio6_1, false);
-// motor rightMotorA = motor(PORT9, ratio6_1, true);
-// motor rightMotorB = motor(PORT5, ratio6_1, true);
-// motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB, rightMotorP);
-
-// inertial DrivetrainInertial = inertial(PORT20);
-// smartdrive Drivetrain = smartdrive(LeftDriveSmart, RightDriveSmart, DrivetrainInertial,
-//                                    299.24, 320, 40, mm, 1.5);
-
-// motor Intake = motor(PORT18, ratio6_1, false);
-// motor Catapult = motor(PORT15, ratio36_1, true);
-
-// bumper BumperA = bumper(Brain.ThreeWirePort.A);
-// controller Controller1 = controller(primary);
-
-// competition Competition;
-
-// void auto_0() {
-//     Drivetrain.setDriveVelocity(25,percent);
-//     Drivetrain.driveFor(reverse, 2300, mm);
-//     Drivetrain.driveFor(forward, 500, mm);
-// }
-
-// void teleOp() {
-//     double leftSpeed, rightSpeed, turnSpeed = 0.5;
-//     RightDriveSmart.spin(forward);
-//     LeftDriveSmart.spin(forward);
-//     while (Competition.isDriverControl() && Competition.isEnabled()) {
-
-//         leftSpeed = Controller1.Axis3.position() - Controller1.Axis1.position() * turnSpeed;
-//         rightSpeed = Controller1.Axis3.position() + Controller1.Axis1.position() * turnSpeed ;
-
-        RightDriveSmart.setVelocity(rightSpeed, percent);
-//         LeftDriveSmart.setVelocity(leftSpeed, percent);
-
-//         Drivetrain.setStopping((Controller1.ButtonY.pressing() ? hold : coast));
-
-//         if (BumperA.pressing()) {
-//             Catapult.stop();
-//             if (Controller1.ButtonL1.pressing()) {
-//                 Catapult.setVelocity(95, percent);
-//                 Catapult.spin(reverse);
-//             }
-//         }
-//         else {
-//             Catapult.setVelocity(95, percent);
-//             Catapult.spin(reverse);
-//         }
-
-//         Intake.setVelocity(95,percent);
-//         if (Controller1.ButtonR1.pressing()) {
-//             Intake.spin(forward);
-//         }
-//         else if (Controller1.ButtonR2.pressing()) {
-//             Intake.spin(reverse);
-//         }
-//         else {
-//             Intake.stop();
-//         }
-//     }
-// }
-
-// int main() {
-//     vex::competition::bStopTasksBetweenModes = false;
-//     Competition.autonomous(auto_0);
-//     Competition.drivercontrol(teleOp);
-
-//     DrivetrainInertial.calibrate();
-//     while (DrivetrainInertial.isCalibrating()) {}
-
-//     return 0;
-// }
-*/
-
 #include "Drive.h"
 
 vex::brain Brain;
 
-vex::motor lb = vex::motor(vex::PORT20, vex::ratio18_1, true);
-vex::motor lm = vex::motor(vex::PORT15, vex::ratio18_1);
-vex::motor lf  = vex::motor(vex::PORT16, vex::ratio18_1, true);
+vex::motor lb = vex::motor(vex::PORT20, vex::ratio18_1);
+vex::motor lm = vex::motor(vex::PORT15, vex::ratio18_1, true);
+vex::motor lf  = vex::motor(vex::PORT16, vex::ratio18_1);
 
-vex::motor rb = vex::motor(vex::PORT14, vex::ratio18_1);
-vex::motor rm = vex::motor(vex::PORT10, vex::ratio18_1, true);
-vex::motor rf = vex::motor(vex::PORT12, vex::ratio18_1);
+vex::motor rb = vex::motor(vex::PORT14, vex::ratio18_1, true);
+vex::motor rm = vex::motor(vex::PORT10, vex::ratio18_1);
+vex::motor rf = vex::motor(vex::PORT12, vex::ratio18_1, true);
 
 vex::motor cata = vex::motor(vex::PORT11, vex::ratio36_1);
 
@@ -116,10 +31,23 @@ vex::competition Comp;
 bool blockState = false, wingState = false;
 
 void auton15s() {
+    // drive.driveWithGeometry(-12, 25);
     Drivetrain.setDriveVelocity(25, vex::percent);
-    Drivetrain.driveFor(vex::reverse, 2300, vex::mm);
-    Drivetrain.driveFor(vex::forward, 500, vex::mm);
-    // d.driveFor(10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
+    Drivetrain.drive(vex::reverse);
+    vex::wait(5, vex::seconds);
+    Drivetrain.driveFor(vex::forward, 200, vex::mm);
+    // Drivetrain.turn(vex::right);
+    // vex::wait(0.1, vex::seconds);
+    // wings.set(true);
+    // Drivetrain.drive(vex::forward);
+    // vex::wait(5, vex::seconds);
+    // wings.set(false);
+    // Drivetrain.turn(vex::turnType::right);
+    // vex::wait(0.5, vex::seconds);
+    // Drivetrain.drive(vex::forward);
+    // vex::wait(3, vex::seconds);
+    // Drivetrain.stop();
+    // d.driveFor(1/0.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
     // d.driveFor(-10.0, vex::distanceUnits::in, 25.0, vex::velocityUnits::pct, true);
     // wings.set(true);
     // d.turnToHeading(135.0, vex::rotationUnits::deg, 25.0, vex::velocityUnits::pct, true);
@@ -131,6 +59,7 @@ void R2() {blockState = !blockState;}
 void L2() {wingState = !wingState;}
 
 void teleOp() {
+    cata.setStopping(vex::brakeType::hold);
     c.ButtonR2.pressed(R2);
     c.ButtonL2.pressed(L2);
     cata.spin(vex::forward);
