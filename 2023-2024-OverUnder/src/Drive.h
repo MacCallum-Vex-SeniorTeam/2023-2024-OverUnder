@@ -8,7 +8,7 @@ class TankDrive {
         SlewController slewControl;
         vex::inertial *inertialSensor;
         template <typename... Args> 
-        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), SlewController(0.044, 0.001) {
+        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), slewControl(0.044, 0.001) {
             _AddMotor(m, m2...);
             wheelCirc = M_PI * convert(wheelDiameter, units, vex::distanceUnits::in);
             this->trackWidth = convert(trackWidth, units, vex::distanceUnits::in);

@@ -4,9 +4,9 @@
 
 #define clip(x, min, max) fmax(min, fmin(max, x));
 
-template <typename F, typename A> 
-void enumerate(std::vector<F> l, A func) {
-    F obj;
+template <typename A, typename B> 
+void enumerate(A l, B func) {
+    auto obj = l[0];
     for (int i = 0; l.size(); i++) {
         obj = l[i];
         func(&i, &obj);
@@ -89,6 +89,7 @@ class SlewController {
                     }
                 }
             );
+
             // int i = 0;
             // for (vex::motor motor : motors) {
             //     double voltage = motor.voltage();
@@ -103,6 +104,7 @@ class SlewController {
             //     motor.spin(vex::forward, voltage+error, vex::volt);
             //     i++;
             // }
+
             // double voltage, error;
             // for (int i = 0; i < motors.size(); i++) {
             //     voltage = motors[i].voltage();
@@ -121,7 +123,7 @@ class SlewController {
 
 class PIDController {
     public:
-        double p, i, d, i_max, i_min, i_state, prev_state, target;
+        double p, i, d, i_max, i_min, i_state = 0, prev_state, target = 0;
         PIDController(double p, double i, double d, double i_max, double i_min, double target) {
             this->p = p;
             this->i = i;
@@ -129,8 +131,6 @@ class PIDController {
             this->i_max = i_max;
             this->i_min = i_min;
             this->target = target;
-            i_state = 0;
-            prev_state = 0;
         }
         double getValue(double input) {
             double error = target - input;

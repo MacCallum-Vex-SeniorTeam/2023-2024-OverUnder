@@ -87,20 +87,20 @@
 
 vex::brain Brain;
 
-vex::motor lb = vex::motor(vex::PORT14, vex::ratio18_1, true);
+vex::motor lb = vex::motor(vex::PORT20, vex::ratio18_1, true);
 vex::motor lm = vex::motor(vex::PORT15, vex::ratio18_1);
 vex::motor lf  = vex::motor(vex::PORT16, vex::ratio18_1, true);
 
-vex::motor rb = vex::motor(vex::PORT11, vex::ratio18_1);
-vex::motor rm = vex::motor(vex::PORT12, vex::ratio18_1);
-vex::motor rf = vex::motor(vex::PORT13, vex::ratio18_1);
+vex::motor rb = vex::motor(vex::PORT14, vex::ratio18_1);
+vex::motor rm = vex::motor(vex::PORT10, vex::ratio18_1, true);
+vex::motor rf = vex::motor(vex::PORT12, vex::ratio18_1);
 
-vex::motor cata = vex::motor(vex::PORT20, vex::ratio36_1);
+vex::motor cata = vex::motor(vex::PORT11, vex::ratio36_1);
 
-vex::digital_out wings = vex::digital_out(Brain.ThreeWirePort.H);
-vex::digital_out block = vex::digital_out(Brain.ThreeWirePort.A);
+vex::digital_out wings = vex::digital_out(Brain.ThreeWirePort.E);
+vex::digital_out block = vex::digital_out(Brain.ThreeWirePort.D);
 
-vex::inertial i = vex::inertial(vex::PORT17);
+vex::inertial i = vex::inertial(vex::PORT13);
 vex::controller c = vex::controller(vex::primary);
 
 TankDrive drive = TankDrive(4.0, 10.0, vex::distanceUnits::in, &i, lb, rb, lm, rm, lf, rf);
