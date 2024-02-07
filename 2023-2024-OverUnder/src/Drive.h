@@ -1,5 +1,6 @@
 #include "common.h"
 #include <memory>
+#include <chrono>
 
 class TankDrive {
     public:
@@ -8,9 +9,9 @@ class TankDrive {
         SlewController slewControl;
         vex::inertial *inertialSensor;
         template <typename... Args> 
-        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), slewControl(0.044, 0.001) {
+        TankDrive(double wheelDiameter, double trackWidth, vex::distanceUnits units, double gear_ratio, vex::inertial *inertialSensor, vex::motor m, Args... m2) : motors(), slewControl(0.0000001, 0.0001) {
             _AddMotor(m, m2...);
-            wheelCirc = M_PI * convert(wheelDiameter, units, vex::distanceUnits::in);
+            wheelCirc = M_PI * convert(wheelDiameter, units, vex::distanceUnits::in) * gear_ratio;
             this->trackWidth = convert(trackWidth, units, vex::distanceUnits::in);
             this->inertialSensor = inertialSensor;
             turnRadius = trackWidth/sqrt(2);
@@ -33,8 +34,9 @@ class TankDrive {
                 i++;
             }
         }
-        
-        // theory functions
+        void update() {
+            slewControl.update();
+        }
         void drive(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
@@ -48,6 +50,8 @@ class TankDrive {
                 }
             }
         }
+
+        //works without slew
         void turn(double voltage, vex::voltageUnits voltageUnit = vex::voltageUnits::volt, bool slew = true) {
             if (voltageUnit == vex::voltageUnits::mV) voltage /= 1000;
             voltage = clip(voltage, volt_min, volt_max);
@@ -65,9 +69,8 @@ class TankDrive {
                 }
             }
         }
-        void update() {
-            slewControl.update();
-        }
+
+        // theory functions
         void turnWithEncoders(double angle, double velocity, AngleUnits angleUnits = AngleUnits::DEGREE, vex::velocityUnits velUnits = vex::velocityUnits::pct, double accuracy = 0.01) {
             if (angleUnits == AngleUnits::DEGREE) angle *= M_PI/180.0;
             double distance = turnRadius*angle/wheelCirc;
@@ -122,9 +125,16 @@ class TankDrive {
 
         // functions yet to do
         void driveWithInertialPID(double distance, double p, double i, double d, double i_max, double i_min, vex::distanceUnits distanceUnits = vex::distanceUnits::in, double accuracy = 0.01) {
-            distance = convert(distance, distanceUnits, vex::distanceUnits::in);
-            distance /= wheelCirc;
-            
+            // distance = convert(distance, distanceUnits, vex::distanceUnits::in);
+            // distance /= wheelCirc;
+            // double dist_traveled = 0, velocity = 0;
+            // std::chrono::system_clock::time_point start_time;
+            // double delta_time;
+            // PIDController PID_loop(p, i, d, i_max, i_min, distance);
+            // while (abs(dist_traveled-distance) > accuracy) {
+            //     start_time = std::chrono::system_clock::now();
+                
+            // }
         }
     private:
         template <typename... Args> 

@@ -69,22 +69,24 @@ class SlewController {
             this->slewRate = slewRate;
             this->required_accuracy = required_accuracy;
         }
-        void addTask(vex::motor motor, double targetVoltage) {
-            targetVoltage = fmax(volt_min, fmin(volt_max, targetVoltage));
+        void addTask(vex::motor motor, double targetVoltage, vex::voltageUnits vUnits = vex::voltageUnits::volt) {
+            if (vUnits == vex::voltageUnits::mV) targetVoltage /= 1000;
+            targetVoltage = clip(targetVoltage, volt_min, volt_max);
             motors.push_back(motor);
             this->targetVoltage.push_back(targetVoltage);
         }
         void update() {
+            double voltage, error;
             int i = 0;
             for (vex::motor motor : motors) {
-                double voltage = motor.voltage();
-                if (fabs(voltage - targetVoltage[i]) < required_accuracy) {
+                voltage = motor.voltage();
+                error = targetVoltage[i] - voltage;
+                if (fabs(error) < required_accuracy) {
                     motors.erase(motors.begin()+i);
                     targetVoltage.erase(targetVoltage.begin()+i);
                     i--;
                     continue;
                 }
-                double error = targetVoltage[i] - voltage;
                 if (fabs(error) > slewRate) error = copysign(slewRate, error);
                 motor.spin(vex::forward, voltage+error, vex::volt);
                 i++;
